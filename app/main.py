@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from .tts import generate_audio
+from tts import generate_audio
 
 
 app = FastAPI()

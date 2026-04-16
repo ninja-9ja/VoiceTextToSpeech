@@ -6,10 +6,12 @@ import io
 
 async def generate_audio(text: str):
     model = Qwen3TTSModel.from_pretrained(
-        "model/Qwen3-TTS-12Hz-1.7B-Base",
+        # /app/model/Qwen3-TTS-12Hz-1.7B-Base
+        "model",
         device_map="cpu",
         dtype=torch.float32,
-    )
+        local_files_only=True
+        )
     wavs, sr = model.generate_voice_clone(
         text=text,
         language="English",
