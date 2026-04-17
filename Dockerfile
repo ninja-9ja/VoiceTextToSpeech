@@ -1,24 +1,25 @@
-FROM qwen3-tts-fastapi:latest
+#FROM qwen3-tts-fastapi:latest
 
-#FROM python:3.11-slim
+FROM python:3.11-slim
 
-#RUN apt-get update && apt-get install -y --no-install-recommends \
-#	curl \
-#	wget \
-#	unzip \
-#	&& rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	sox \
+	curl \
+	wget \
+	unzip \
+	&& rm -rf /var/lib/apt/lists/*
 
-#WORKDIR /app
+WORKDIR /app
 
-#COPY app/requirements.txt .
-#RUN pip install --upgrade pip
-#RUN pip install --no-cache-dir -r requirements.txt
+COPY app/requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./app .
 
-#RUN pip install huggingface_hub && \
-#    python -c "from huggingface_hub import snapshot_download; \
-#    snapshot_download(repo_id='Qwen/Qwen3-TTS-12Hz-1.7B-Base', local_dir='model')"
+RUN pip install huggingface_hub && \
+    python -c "from huggingface_hub import snapshot_download; \
+    snapshot_download(repo_id='Qwen/Qwen3-TTS-12Hz-1.7B-Base', local_dir='model')"
 
 ENV TRANSFORMERS_OFFLINE=1
 
