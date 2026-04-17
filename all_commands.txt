@@ -1,0 +1,16 @@
+# Создание образа из докерфайла находясь в папке с докерфайлом
+docker build -t qwen3_tts_fastapi . 
+
+# Запуск докера на основе образа с учетом портов
+docker run -d -p 8000:8080 qwen3-tts-fastapi
+
+# Просмотр логов запущенного докера
+docker logs -f --tail 50 e6e787d7646c
+
+# Вход в докер контейнер
+docker exec -ti 8c03e206a5c2 bash
+
+# Удалить зависший контейнер
+docker rm -f e6e787d7646c
+
+curl -X POST http://0.0.0.0:8000/tts   -H "Content-Type: application/json"   -d '{"text": "Hellow!"}'   --output output.wav --max-time 600
