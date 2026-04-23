@@ -13,24 +13,24 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /app/requirements.txt && \
     pip install --no-cache-dir "huggingface_hub[cli]"
 
+# Если модель gated/private, можно передать токен:
+# docker build --build-arg HF_TOKEN=hf_xxx -t qwen-tts-app .
 ARG HF_TOKEN=""
 RUN if [ -n "$HF_TOKEN" ]; then huggingface-cli login --token "$HF_TOKEN"; fi
 
-# В образ скачиваем tokenizer и Base-модель для voice cloning
+# Скачиваем ВНУТРЬ образа и модель, и tokenizer
 RUN mkdir -p /models && \
+    huggingface-cli download Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice \
+      --local-dir /models/Qwen3-TTS-12Hz-0.6B-CustomVoice && \
     huggingface-cli download Qwen/Qwen3-TTS-Tokenizer-12Hz \
-      --local-dir /models/Qwen3-TTS-Tokenizer-12Hz && \
-    # huggingface-cli download Qwen/Qwen3-TTS-12Hz-1.7B-Base \
-    #   --local-dir /models/Qwen3-TTS-12Hz-1.7B-Base
-    huggingface-cli download Qwen/Qwen3-TTS-12Hz-0.6B-Base \
-      --local-dir /models/Qwen3-TTS-12Hz-0.6B-Base
+      --local-dir /models/Qwen3-TTS-Tokenizer-12Hz
 
 COPY app/ /app/
 
 ENV TRANSFORMERS_OFFLINE=1
 ENV HF_HUB_OFFLINE=1
-# ENV QWEN_MODEL_PATH=/models/Qwen3-TTS-12Hz-1.7B-Base
-ENV QWEN_MODEL_PATH=/models/Qwen3-TTS-12Hz-0.6B-Base
+ENV QWEN_MODEL_PATH=/models/Qwen3-TTS-12Hz-0.6B-CustomVoice
+ENV QWEN_SPEAKER=Ryan
 
 EXPOSE 8000
 

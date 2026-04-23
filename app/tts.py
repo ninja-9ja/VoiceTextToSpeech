@@ -1,13 +1,12 @@
-import os
 import io
-import tempfile
-from pathlib import Path
+import os
 
-import torch
 import soundfile as sf
+import torch
 from qwen_tts import Qwen3TTSModel
 
-MODEL_PATH = os.getenv("QWEN_MODEL_PATH", "/models/Qwen3-TTS-12Hz-0.6B-Base")
+MODEL_PATH = os.getenv("QWEN_MODEL_PATH", "/models/Qwen3-TTS-12Hz-0.6B-CustomVoice")
+SPEAKER = os.getenv("QWEN_SPEAKER", "Ryan")
 
 
 def load_model():
@@ -27,29 +26,14 @@ def load_model():
     return model
 
 
-def generate_audio_clone(model, text: str, ref_audio_bytes: bytes, ref_filename: str, ref_text: str) -> bytes:
-    suffix = Path(ref_filename).suffix if ref_filename else ".wav"
-    if not suffix:
-        suffix = ".wav"
+def generate_audio(model: Qwen3TTSModel, text: str) -> bytes:
+    wavs, sr = model.generate_custom_voice(
+        text=text,
+        language="English",
+        speaker=SPEAKER,
+    )
 
-    tmp_path = None
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            tmp.write(ref_audio_bytes)
-            tmp_path = tmp.name
-
-        wavs, sr = model.generate_voice_clone(
-            text=text,
-            language="Russian",
-            ref_audio=tmp_path,
-            ref_text=ref_text,
-        )
-
-        buffer = io.BytesIO()
-        sf.write(buffer, wavs[0], sr, format="WAV")
-        buffer.seek(0)
-        return buffer.getvalue()
-
-    finally:
-        if tmp_path and os.path.exists(tmp_path):
-            os.remove(tmp_path)
+    buffer = io.BytesIO()
+    sf.write(buffer, wavs[0], sr, format="WAV")
+    buffer.seek(0)
+    return buffer.getvalue()

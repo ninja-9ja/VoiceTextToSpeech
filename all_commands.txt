@@ -18,6 +18,12 @@ curl http://127.0.0.1:8000/health
 Ожидаемо:
 {"status":"ok"}
 
+Основной тест TTS
+curl -v -X POST http://127.0.0.1:8000/tts \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Hello! This is a test."}' \
+  --output output.wav
+
 Тест клонирования русского голоса:
 curl -v -X POST http://127.0.0.1:8000/tts-clone \
   -F 'text=Привет! Это уже новый текст, но сказанный клонированным голосом на русском языке.' \
