@@ -1,5 +1,2 @@
 fastapi
 uvicorn[standard]
-qwen-tts
-torch
-soundfile

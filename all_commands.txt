@@ -1,16 +1,58 @@
 # Создание образа из докерфайла находясь в папке с докерфайлом
-docker build -t qwen3_tts_fastapi . 
+docker build -t qwen-tts .
 
 # Запуск докера на основе образа с учетом портов
-docker run -d -p 8000:8080 qwen3-tts-fastapi
+docker run --rm -p 8000:8000 --name voice-tts-rus voice-llm-tts-slim
 
 # Просмотр логов запущенного докера
-docker logs -f --tail 50 e6e787d7646c
+docker logs -f --tail 50 20a6380b341e
 
 # Вход в докер контейнер
-docker exec -ti 8c03e206a5c2 bash
+docker exec -ti f5da6b26cd11 bash
 
 # Удалить зависший контейнер
 docker rm -f e6e787d7646c
 
-curl -X POST http://0.0.0.0:8000/tts   -H "Content-Type: application/json"   -d '{"text": "Hellow!"}'   --output output.wav --max-time 600
+Проверка, что сервер жив:
+curl http://127.0.0.1:8000/health
+Ожидаемо:
+{"status":"ok"}
+
+Основной тест TTS
+curl -v -X POST http://127.0.0.1:8000/tts \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Это очень крто когда у тебя всё получается"}' \
+  --output output.wav
+
+Тест клонирования русского голоса:
+curl -v -X POST http://127.0.0.1:8000/clonetts \
+  -F 'text=Привет! Это уже новый текст, но сказанный клонированным голосом на русском языке.' \
+  -F 'ref_text=Нет киса - это мой пирог. Брысь! Плохая киса! Плохая-плохая, это моя запеканка! Брысь от сюда - пошла вон. Мам киса прям как виброжоп.' \
+  -F 'ref_audio=@Eric_Cartman.wav' \
+  --output clone1.wav
+
+docker run --rm \
+  -p 8000:8000 \
+  --name voice-qwen-tts-clone \
+  -v /usb/:/models/ \
+  -e TRANSFORMERS_OFFLINE=1 \
+  -e HF_HUB_OFFLINE=1 \
+  -e QWEN_MODEL_PATH=/models/Qwen3-TTS-12Hz-1.7B-Base \
+  -e QWEN_SPEAKER=Ryan \
+  voice-qwen-tts-clone
+
+  docker run --rm   -p 8000:8000   --name voice-qwen-tts-clone  -v /usb/:/models/   voice-qwen-tts-clone
+
+  curl -v -X POST http://127.0.0.1:8000/clonetts \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Зафиксировано событие, вы все засранцы","ref_audio":"/models/Voices/Eric_Cartman.wav", "ref_text": "Нет киса - это мой пирог. Брысь! Плохая киса! Плохая-плохая, это моя запеканка! Брысь от сюда - пошла вон. Мам киса прям как виброжоп."}' \
+  --output output.wav
+
+  curl -v -X POST http://127.0.0.1:8000/clonetts \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Однажды, в студёную зимнюю пору Я из лесу вышел; был сильный мороз. Гляжу, поднимается  медленно в гору Лошадка, везущая хворосту воз. И, шествуя важно, в спокойствии чинном, Лошадку ведёт под уздцы мужичок В больших сапогах, в полушубке овчинном, В больших рукавицах... а сам с ноготок!","ref_audio":"/models/Voices/Frolova_Anna.wav", "ref_text": "Восемнадцатого ноября началось крупное выступление врага на дедиловском направлении. Более семидесяти танков пошли в атаку, было уничтожено две тысячи пятьсот фашистов и подбито около пятидесяти танков"}' \
+  --output outputAnna.wav
+
+    curl -v -X POST http://127.0.0.1:8000/clonetts \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Я вас любил: любовь еще, быть может, В душе моей угасла не совсем; Но пусть она вас  ольше не тревожит; Я не хочу печалить вас ничем. Я вас любил безмолвно, безнадежно, То робостью, то  ревностью томим; Я вас любил так искренно, так нежно, Как дай вам бог любимой быть  другим.","ref_audio":"/models/Voices/Frolov_Ivan.wav", "ref_text": "Восемнадцатого ноября началось крупное наступление врага на дедиловском направлении. Более семидесяти танков пошли в атаку. В этих боях было уничтожено две тысячи пятьсот фашистов и подбито около пятидесяти танков"}' \  --output outputIvan.wav
